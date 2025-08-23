@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Wass</string>
+
+    <!-- Menu Items -->
+    <string name="change_mode">Change Mode</string>
+
+    <!-- Activity Titles -->
+    <string name="locations">Locations</string>
+
+    <!-- Toast Messages -->
+    <string name="location_permissions_required">Location permissions are required</string>
+    <string name="no_locations_found">No locations found</string>
+    <string name="no_maps_app_found">No maps app found</string>
+
+    <!-- UI Text -->
+    <string name="mode_not_set">Mode: Not Set</string>
+    <string name="select_app_mode">Select App Mode</string>
+    <string name="show_as_list">Show as list</string>
+</resources>
