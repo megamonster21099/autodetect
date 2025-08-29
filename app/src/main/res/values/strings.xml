@@ -3,6 +3,7 @@
 
     <!-- Menu Items -->
     <string name="change_mode">Change Mode</string>
+    <string name="view_logs">View Logs</string>
 
     <!-- Activity Titles -->
     <string name="locations">Locations</string>
@@ -16,4 +17,7 @@
     <string name="mode_not_set">Mode: Not Set</string>
     <string name="select_app_mode">Select App Mode</string>
     <string name="show_as_list">Show as list</string>
+    <string name="clear_logs">Clear Logs</string>
+    <string name="logs_cleared">Logs cleared successfully.</string>
+    <string name="loading_logs">Loading logs…</string>
 </resources>

@@ -6,4 +6,9 @@
         android:id="@+id/action_change_mode"
         android:title="@string/change_mode"
         app:showAsAction="never" />
+    
+    <item
+        android:id="@+id/action_view_logs"
+        android:title="@string/view_logs"
+        app:showAsAction="never" />
 </menu>

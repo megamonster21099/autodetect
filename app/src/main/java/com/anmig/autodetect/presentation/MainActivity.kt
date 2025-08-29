@@ -22,21 +22,30 @@ import com.anmig.autodetect.R
 import com.anmig.autodetect.models.AppMode
 import com.anmig.autodetect.services.LocationService
 import com.anmig.autodetect.services.ServiceMonitorWorker
+import com.anmig.autodetect.utils.Logger
 import com.anmig.autodetect.utils.ModePreferences
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
+    companion object {
+        private const val TAG = "MainActivity"
+    }
+    
     private lateinit var modePreferences: ModePreferences
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
+        Logger.log("$TAG: Permission result received")
         val fineLocationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
         val coarseLocationGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false
+        Logger.log("$TAG: Fine location: $fineLocationGranted, Coarse location: $coarseLocationGranted")
 
         if (fineLocationGranted || coarseLocationGranted) {
+            Logger.log("$TAG: Location permissions granted, starting target mode")
             startTargetMode()
         } else {
+            Logger.log("$TAG: Location permissions denied")
             Toast.makeText(
                 this,
                 getString(R.string.location_permissions_required),
@@ -48,29 +57,46 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnShowAsList: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Logger.initialize(this)
+        Logger.log("\n\n\n$TAG: onCreate() called")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         tvModeStatus = findViewById(R.id.tv_mode_status)
         btnShowAsList = findViewById(R.id.btn_show_as_list)
 
         modePreferences = ModePreferences(this)
+        val modeSet = modePreferences.isModeSet()
+        Logger.log("$TAG: Mode set: $modeSet")
 
-        if (!modePreferences.isModeSet()) {
+        if (!modeSet) {
+            Logger.log("$TAG: No mode set, showing selection dialog")
             showModeSelectionDialog()
         } else {
+            Logger.log("$TAG: Mode already set, checking current mode")
             checkMode()
         }
+        Logger.log("$TAG: onCreate() completed")
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        Logger.log("$TAG: onCreateOptionsMenu() called")
         menuInflater.inflate(R.menu.main_menu, menu)
         return true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        Logger.log("$TAG: onOptionsItemSelected() called with item: ${item.title}")
         return when (item.itemId) {
             R.id.action_change_mode -> {
+                Logger.log("$TAG: Change mode option selected")
                 showModeSelectionDialog()
+                true
+            }
+            
+            R.id.action_view_logs -> {
+                Logger.log("$TAG: View logs option selected")
+                val intent = Intent(this, LogsActivity::class.java)
+                startActivity(intent)
                 true
             }
 
@@ -79,11 +105,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showModeSelectionDialog() {
+        Logger.log("$TAG: showModeSelectionDialog() called")
         val modes = arrayOf(AppMode.CLIENT.name, AppMode.TARGET.name)
         AlertDialog.Builder(this)
             .setTitle(getString(R.string.select_app_mode))
             .setItems(modes) { _, which ->
                 val selectedMode = if (which == 0) AppMode.CLIENT else AppMode.TARGET
+                Logger.log("$TAG: Mode selected: $selectedMode")
                 modePreferences.saveMode(selectedMode)
                 checkMode()
             }
@@ -92,6 +120,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkPermissions(): Boolean {
+        Logger.log("$TAG: checkPermissions() called")
         val permissions = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -112,47 +141,65 @@ class MainActivity : AppCompatActivity() {
             permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
 
+        Logger.log("$TAG: Missing permissions: ${permissions.joinToString(", ")}")
         if (permissions.isNotEmpty()) {
+            Logger.log("$TAG: Requesting ${permissions.size} permissions")
             locationPermissionLauncher.launch(permissions.toTypedArray())
             return false
         } else {
+            Logger.log("$TAG: All permissions already granted")
             return true
         }
     }
 
     private fun checkMode() {
-        when (modePreferences.getMode()) {
+        val currentMode = modePreferences.getMode()
+        Logger.log("$TAG: checkMode() called - current mode: $currentMode")
+        when (currentMode) {
             AppMode.TARGET -> {
+                Logger.log("$TAG: Target mode selected, checking permissions")
                 if (checkPermissions()) {
                     startTargetMode()
                 }
             }
 
-            AppMode.CLIENT -> startClientMode()
-            null -> showModeSelectionDialog()
+            AppMode.CLIENT -> {
+                Logger.log("$TAG: Client mode selected")
+                startClientMode()
+            }
+            null -> {
+                Logger.log("$TAG: No mode selected, showing dialog")
+                showModeSelectionDialog()
+            }
         }
     }
 
     private fun startTargetMode() {
+        Logger.log("$TAG: startTargetMode() called")
         tvModeStatus.isVisible = false
         btnShowAsList.isVisible = false
         val intent = Intent(this, LocationService::class.java)
         startForegroundService(intent)
         scheduleServiceMonitoring()
+        Logger.log("$TAG: Target mode started - LocationService launched and monitoring scheduled")
     }
 
     private fun startClientMode() {
+        Logger.log("$TAG: startClientMode() called")
         tvModeStatus.isVisible = false
         btnShowAsList.isVisible = true
         btnShowAsList.setOnClickListener {
+            Logger.log("$TAG: Show as list button clicked")
             val intent = Intent(this, LocationListActivity::class.java)
             startActivity(intent)
         }
         stopService(Intent(this, LocationService::class.java))
         stopServiceMonitoring()
+        Logger.log("$TAG: Client mode started - LocationService stopped and monitoring cancelled")
     }
 
     private fun scheduleServiceMonitoring() {
+        Logger.log("$TAG: scheduleServiceMonitoring() called")
         val workRequest = PeriodicWorkRequestBuilder<ServiceMonitorWorker>(15, TimeUnit.MINUTES)
             .build()
 
@@ -161,9 +208,12 @@ class MainActivity : AppCompatActivity() {
             ExistingPeriodicWorkPolicy.KEEP,
             workRequest
         )
+        Logger.log("$TAG: Service monitoring scheduled with 15-minute intervals")
     }
 
     private fun stopServiceMonitoring() {
+        Logger.log("$TAG: stopServiceMonitoring() called")
         WorkManager.getInstance(this).cancelUniqueWork("service_monitor")
+        Logger.log("$TAG: Service monitoring cancelled")
     }
 }
