@@ -4,6 +4,8 @@
     <!-- Menu Items -->
     <string name="change_mode">Change Mode</string>
     <string name="view_logs">View Logs</string>
+    <string name="send_logs">Send Logs to Firebase</string>
+    <string name="get_logs">Get Logs from Firebase</string>
 
     <!-- Activity Titles -->
     <string name="locations">Locations</string>
@@ -12,6 +14,15 @@
     <string name="location_permissions_required">Location permissions are required</string>
     <string name="no_locations_found">No locations found</string>
     <string name="no_maps_app_found">No maps app found</string>
+    <string name="logs_sent_successfully">Logs sent to Firebase successfully</string>
+    <string name="logs_send_failed">Failed to send logs to Firebase</string>
+    <string name="sending_logs">Sending logs to Firebase...</string>
+    <string name="loading_firebase_logs">Loading logs from Firebase...</string>
+    <string name="no_firebase_logs">No logs found in Firebase</string>
+    <string name="firebase_logs_load_failed">Failed to load logs from Firebase</string>
+    <string name="delete_firebase_logs">Delete Firebase Logs</string>
+    <string name="firebase_logs_deleted">Firebase logs deleted successfully</string>
+    <string name="firebase_logs_delete_failed">Failed to delete Firebase logs</string>
 
     <!-- UI Text -->
     <string name="mode_not_set">Mode: Not Set</string>

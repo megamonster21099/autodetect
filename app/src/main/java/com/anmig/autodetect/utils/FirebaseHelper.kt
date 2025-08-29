@@ -200,4 +200,145 @@ class FirebaseHelper {
                 }
             })
     }
+
+    fun loadLogsToFirebase(callback: (Boolean) -> Unit = {}) {
+        Logger.log("$TAG: loadLogsToFirebase() called")
+        try {
+            val logContent = Logger.readFromFile()
+            if (logContent.isEmpty() || logContent == "Log file does not exist.") {
+                Logger.log("$TAG: No logs to upload")
+                callback(false)
+                return
+            }
+
+            val logsRef = database.getReference("logs")
+            val timestamp = System.currentTimeMillis()
+            val logKey = logsRef.push().key
+
+            if (logKey != null) {
+                Logger.log("$TAG: Generated log key: $logKey")
+                
+                // Encrypt the log content
+                val encryptedLogData = xorDecoder.encode(logContent, encryptionKey)
+                
+                val logEntry = mapOf(
+                    "id" to logKey,
+                    "encryptedData" to encryptedLogData,
+                    "timestamp" to timestamp,
+                    "size" to logContent.length
+                )
+
+                logsRef.child(logKey).setValue(logEntry)
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Logger.log("$TAG: Logs uploaded successfully to Firebase")
+                            callback(true)
+                        } else {
+                            Logger.log("$TAG: Failed to upload logs: ${task.exception?.message}")
+                            callback(false)
+                        }
+                    }
+            } else {
+                Logger.log("$TAG: Failed to generate key for log upload")
+                callback(false)
+            }
+        } catch (e: Exception) {
+            Logger.log("$TAG: Exception during log upload: ${e.message}")
+            callback(false)
+        }
+    }
+
+    fun getLogsFromFirebase(callback: (String?) -> Unit) {
+        Logger.log("$TAG: getLogsFromFirebase() called")
+        try {
+            val logsRef = database.getReference("logs")
+            
+            // Get the most recent log entry
+            logsRef.orderByChild("timestamp").limitToLast(1)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        Logger.log("$TAG: onDataChange() called in getLogsFromFirebase")
+                        
+                        if (dataSnapshot.exists()) {
+                            Logger.log("$TAG: Found log entries in Firebase")
+                            val latestLogSnapshot = dataSnapshot.children.last()
+                            
+                            try {
+                                val logData = latestLogSnapshot.value as? Map<*, *>
+                                val encryptedData = logData?.get("encryptedData")
+                                val timestamp = logData?.get("timestamp") as? Long
+                                
+                                if (encryptedData != null) {
+                                    Logger.log("$TAG: Decrypting log data from timestamp: $timestamp")
+                                    
+                                    // Handle different data types for encrypted data
+                                    val decryptedContent = when (encryptedData) {
+                                        is String -> {
+                                            // If stored as string, convert back to List<Int>
+                                            val intList = encryptedData.split(",").map { it.toInt() }
+                                            xorDecoder.decode(intList, encryptionKey)
+                                        }
+                                        is List<*> -> {
+                                            // If stored as List<Int> already
+                                            @Suppress("UNCHECKED_CAST")
+                                            xorDecoder.decode(encryptedData as List<Int>, encryptionKey)
+                                        }
+                                        else -> {
+                                            Logger.log("$TAG: Unknown encrypted data format: ${encryptedData::class.java}")
+                                            null
+                                        }
+                                    }
+                                    
+                                    if (decryptedContent != null) {
+                                        Logger.log("$TAG: Successfully decrypted ${decryptedContent.length} characters")
+                                        callback(decryptedContent)
+                                    } else {
+                                        Logger.log("$TAG: Failed to decrypt log data")
+                                        callback(null)
+                                    }
+                                } else {
+                                    Logger.log("$TAG: No encrypted data found in log entry")
+                                    callback(null)
+                                }
+                            } catch (e: Exception) {
+                                Logger.log("$TAG: Error processing log data: ${e.message}")
+                                callback(null)
+                            }
+                        } else {
+                            Logger.log("$TAG: No log entries found in Firebase")
+                            callback(null)
+                        }
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        Logger.log("$TAG: Database error in getLogsFromFirebase: ${databaseError.message}")
+                        callback(null)
+                    }
+                })
+        } catch (e: Exception) {
+            Logger.log("$TAG: Exception during log retrieval: ${e.message}")
+            callback(null)
+        }
+    }
+
+    fun deleteLogsFromFirebase(callback: (Boolean) -> Unit = {}) {
+        Logger.log("$TAG: deleteLogsFromFirebase() called")
+        try {
+            val logsRef = database.getReference("logs")
+            
+            logsRef.removeValue()
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Logger.log("$TAG: All logs deleted from Firebase successfully")
+                        callback(true)
+                    } else {
+                        Logger.log("$TAG: Failed to delete logs from Firebase: ${task.exception?.message}")
+                        callback(false)
+                    }
+                }
+        } catch (e: Exception) {
+            Logger.log("$TAG: Exception during log deletion: ${e.message}")
+            callback(false)
+        }
+    }
 }

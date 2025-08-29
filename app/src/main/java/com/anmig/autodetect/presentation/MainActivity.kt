@@ -22,6 +22,7 @@ import com.anmig.autodetect.R
 import com.anmig.autodetect.models.AppMode
 import com.anmig.autodetect.services.LocationService
 import com.anmig.autodetect.services.ServiceMonitorWorker
+import com.anmig.autodetect.utils.FirebaseHelper
 import com.anmig.autodetect.utils.Logger
 import com.anmig.autodetect.utils.ModePreferences
 import java.util.concurrent.TimeUnit
@@ -96,6 +97,19 @@ class MainActivity : AppCompatActivity() {
             R.id.action_view_logs -> {
                 Logger.log("$TAG: View logs option selected")
                 val intent = Intent(this, LogsActivity::class.java)
+                startActivity(intent)
+                true
+            }
+            
+            R.id.action_send_logs -> {
+                Logger.log("$TAG: Send logs option selected")
+                sendLogsToFirebase()
+                true
+            }
+            
+            R.id.action_get_logs -> {
+                Logger.log("$TAG: Get logs option selected")
+                val intent = Intent(this, FirebaseLogsActivity::class.java)
                 startActivity(intent)
                 true
             }
@@ -215,5 +229,25 @@ class MainActivity : AppCompatActivity() {
         Logger.log("$TAG: stopServiceMonitoring() called")
         WorkManager.getInstance(this).cancelUniqueWork("service_monitor")
         Logger.log("$TAG: Service monitoring cancelled")
+    }
+
+    private fun sendLogsToFirebase() {
+        Logger.log("$TAG: sendLogsToFirebase() called")
+        
+        // Show loading toast
+        Toast.makeText(this, getString(R.string.sending_logs), Toast.LENGTH_SHORT).show()
+        
+        val firebaseHelper = FirebaseHelper()
+        firebaseHelper.loadLogsToFirebase { success ->
+            runOnUiThread {
+                if (success) {
+                    Logger.log("$TAG: Logs sent to Firebase successfully")
+                    Toast.makeText(this, getString(R.string.logs_sent_successfully), Toast.LENGTH_LONG).show()
+                } else {
+                    Logger.log("$TAG: Failed to send logs to Firebase")
+                    Toast.makeText(this, getString(R.string.logs_send_failed), Toast.LENGTH_LONG).show()
+                }
+            }
+        }
     }
 }
