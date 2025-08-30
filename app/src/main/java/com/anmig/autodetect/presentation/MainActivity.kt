@@ -36,7 +36,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var modePreferences: ModePreferences
-    private var shouldCloseAsap = false
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -179,15 +178,8 @@ class MainActivity : AppCompatActivity() {
         when (currentMode) {
             AppMode.TARGET -> {
                 Logger.log("$TAG: Target mode selected, checking permissions")
-                shouldCloseAsap = true
                 if (checkPermissions()) {
-                    viewStarter.setOnClickListener {
-                        shouldCloseAsap = false
-                    }
                     startTargetMode()
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        if (shouldCloseAsap) finish()
-                    }, 500)
                 }
             }
 
