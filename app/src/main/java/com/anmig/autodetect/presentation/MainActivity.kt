@@ -59,6 +59,7 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var tvModeStatus: TextView
     private lateinit var btnShowAsList: Button
+    private lateinit var btnShowAsMap: Button
     private lateinit var viewStarter: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +70,7 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowTitleEnabled(false);
         tvModeStatus = findViewById(R.id.tv_mode_status)
         btnShowAsList = findViewById(R.id.btn_show_as_list)
+        btnShowAsMap = findViewById(R.id.btn_show_as_map)
         viewStarter = findViewById(R.id.view_starter)
 
         modePreferences = ModePreferences(this)
@@ -117,6 +119,12 @@ class MainActivity : AppCompatActivity() {
                 Logger.log("$TAG: Get logs option selected")
                 val intent = Intent(this, FirebaseLogsActivity::class.java)
                 startActivity(intent)
+                true
+            }
+
+            R.id.action_delete_locations -> {
+                Logger.log("$TAG: Delete locations option selected")
+                showDeleteLocationsConfirmationDialog()
                 true
             }
 
@@ -199,6 +207,7 @@ class MainActivity : AppCompatActivity() {
         Logger.log("$TAG: startTargetMode() called")
         tvModeStatus.isVisible = false
         btnShowAsList.isVisible = false
+        btnShowAsMap.isVisible = false
         val intent = Intent(this, LocationService::class.java)
         startForegroundService(intent)
         scheduleServiceMonitoring()
@@ -209,9 +218,15 @@ class MainActivity : AppCompatActivity() {
         Logger.log("$TAG: startClientMode() called")
         tvModeStatus.isVisible = false
         btnShowAsList.isVisible = true
+        btnShowAsMap.isVisible = true
         btnShowAsList.setOnClickListener {
             Logger.log("$TAG: Show as list button clicked")
             val intent = Intent(this, LocationListActivity::class.java)
+            startActivity(intent)
+        }
+        btnShowAsMap.setOnClickListener {
+            Logger.log("$TAG: Show as map button clicked")
+            val intent = Intent(this, LocationMapActivity::class.java)
             startActivity(intent)
         }
         stopService(Intent(this, LocationService::class.java))
@@ -258,6 +273,52 @@ class MainActivity : AppCompatActivity() {
                     Logger.log("$TAG: Failed to send logs to Firebase")
                     Toast.makeText(this, getString(R.string.logs_send_failed), Toast.LENGTH_LONG)
                         .show()
+                }
+            }
+        }
+    }
+
+    private fun showDeleteLocationsConfirmationDialog() {
+        Logger.log("$TAG: showDeleteLocationsConfirmationDialog() called")
+        
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.delete_locations_title))
+            .setMessage(getString(R.string.delete_locations_message))
+            .setPositiveButton(getString(R.string.delete_locations_confirm)) { _, _ ->
+                Logger.log("$TAG: User confirmed location deletion")
+                deleteAllLocations()
+            }
+            .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
+                Logger.log("$TAG: User cancelled location deletion")
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+    }
+
+    private fun deleteAllLocations() {
+        Logger.log("$TAG: deleteAllLocations() called")
+        
+        // Show loading toast
+        Toast.makeText(this, getString(R.string.deleting_locations), Toast.LENGTH_SHORT).show()
+
+        val firebaseHelper = FirebaseHelper()
+        firebaseHelper.deleteAllLocations { success ->
+            runOnUiThread {
+                if (success) {
+                    Logger.log("$TAG: All locations deleted successfully")
+                    Toast.makeText(
+                        this,
+                        getString(R.string.locations_deleted),
+                        Toast.LENGTH_LONG
+                    ).show()
+                } else {
+                    Logger.log("$TAG: Failed to delete locations")
+                    Toast.makeText(
+                        this,
+                        getString(R.string.locations_delete_failed),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }

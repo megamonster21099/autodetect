@@ -4,14 +4,14 @@
     <!-- Location permissions -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    
+
     <!-- For foreground service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-    
+
     <!-- For boot receiver -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    
+
     <!-- Internet access for Firebase -->
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -34,6 +34,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Autodetect">
+
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key_local" />
+        
         <activity
             android:name=".presentation.MainActivity"
             android:exported="true"
@@ -44,16 +50,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
+
         <activity
             android:name=".presentation.LocationListActivity"
             android:exported="false" />
-        
+
+        <activity
+            android:name=".presentation.LocationMapActivity"
+            android:exported="false" />
+
         <activity
             android:name=".presentation.LogsActivity"
             android:exported="false"
             android:parentActivityName=".presentation.MainActivity" />
-        
+
         <activity
             android:name=".presentation.FirebaseLogsActivity"
             android:exported="false"

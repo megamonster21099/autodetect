@@ -341,4 +341,23 @@ class FirebaseHelper {
             callback(false)
         }
     }
+
+    fun deleteAllLocations(callback: (Boolean) -> Unit = {}) {
+        Logger.log("$TAG: deleteAllLocations() called")
+        try {
+            locationsRef.removeValue()
+                .addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        Logger.log("$TAG: All locations deleted from Firebase successfully")
+                        callback(true)
+                    } else {
+                        Logger.log("$TAG: Failed to delete locations from Firebase: ${task.exception?.message}")
+                        callback(false)
+                    }
+                }
+        } catch (e: Exception) {
+            Logger.log("$TAG: Exception during location deletion: ${e.message}")
+            callback(false)
+        }
+    }
 }

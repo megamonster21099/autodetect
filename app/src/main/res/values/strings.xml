@@ -6,6 +6,7 @@
     <string name="view_logs">View Logs</string>
     <string name="send_logs">Send Logs to Firebase</string>
     <string name="get_logs">Get Logs from Firebase</string>
+    <string name="delete_locations">Delete All Locations</string>
 
     <!-- Activity Titles -->
     <string name="locations">Locations</string>
@@ -28,7 +29,17 @@
     <string name="mode_not_set">Mode: Not Set</string>
     <string name="select_app_mode">Select App Mode</string>
     <string name="show_as_list">Show as list</string>
+    <string name="show_as_map">Show as map</string>
     <string name="clear_logs">Clear Logs</string>
     <string name="logs_cleared">Logs cleared successfully.</string>
     <string name="loading_logs">Loading logs…</string>
+    
+    <!-- Delete Locations -->
+    <string name="delete_locations_title">Delete All Locations</string>
+    <string name="delete_locations_message">Are you sure you want to delete all location data? This action cannot be undone.</string>
+    <string name="delete_locations_confirm">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="deleting_locations">Deleting locations…</string>
+    <string name="locations_deleted">All locations deleted successfully</string>
+    <string name="locations_delete_failed">Failed to delete locations</string>
 </resources>

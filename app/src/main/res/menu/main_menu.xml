@@ -21,4 +21,9 @@
         android:id="@+id/action_get_logs"
         android:title="@string/get_logs"
         app:showAsAction="never" />
+    
+    <item
+        android:id="@+id/action_delete_locations"
+        android:title="@string/delete_locations"
+        app:showAsAction="never" />
 </menu>

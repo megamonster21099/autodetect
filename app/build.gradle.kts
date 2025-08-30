@@ -90,6 +90,9 @@ dependencies {
 
     // Location
     implementation(libs.play.services.location)
+    
+    // Google Maps
+    implementation(libs.play.services.maps)
 
     // WorkManager
     implementation(libs.androidx.work.runtime)
